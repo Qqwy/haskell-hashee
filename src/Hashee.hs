@@ -2,7 +2,7 @@ module Hashee (Hashee(buildHasher), hash) where
 
 import Hashee.Hasher (Hasher(Hasher))
 import Hashee.Hasher qualified as Hasher
-import Hashee.HasherState (HashingAlgorithm(Digest))
+import Hashee.HashingAlgorithm (HashingAlgorithm(Digest))
 import Hashee.Hasher qualified as Hasher
 import Data.Primitive.ByteArray (ByteArray)
 import Data.Primitive.ByteArray qualified as ByteArray
@@ -12,31 +12,9 @@ import Data.ByteString.Short (ShortByteString)
 import Data.ByteString.Short qualified as ShortByteString
 import Data.Void
 import Data.Tuple (Solo(..))
-import Data.Hashable (Hashable)
-import Data.Hashable qualified as Hashable
 
 hash :: (Hashee a, HashingAlgorithm h) => h -> a -> Digest h
 hash alg val = Hasher.runHasher alg (buildHasher val)
-
-data Hashed alg a = Hashed a {-# UNPACK #-} !Word64
-
--- | Uses precomputed hash to detect inequality faster
-instance Eq a => Eq (Hashed alg a) where
-  Hashed a ha == Hashed b hb = ha == hb && a == b
-
-instance Ord a => Ord (Hashed alg a) where
-  Hashed a _ `compare` Hashed b _ = a `compare` b
-
-instance Show a => Show (Hashed alg a) where
-  showsPrec d (Hashed a _) = showParen (d > 10) $
-    showString "hashed" . showChar ' ' . showsPrec 11 a
-
-instance Eq a => Hashable (Hashed alg a) where
-  hashWithSalt = Hashable.defaultHashWithSalt
-  hash (Hashed _ ha) = fromIntegral ha
-
-hashed :: (Hashee a, HashingAlgorithm h, Digest h ~ Word64) => h -> a -> Hashed h a
-hashed alg val = let h = hash alg val in Hashed val h
 
 class Hashee a where
   buildHasher :: a -> Hasher

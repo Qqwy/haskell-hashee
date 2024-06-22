@@ -65,8 +65,9 @@ library
     exposed-modules:  
       Hashee
       , Hashee.Hasher
-      , Hashee.HasherState
+      , Hashee.HashingAlgorithm
       , Hashee.XXHash
+      , Hashee.Hashed
 
     -- Modules included in this library but not exported.
     -- other-modules:

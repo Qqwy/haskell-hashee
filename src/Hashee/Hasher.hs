@@ -3,8 +3,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 module Hashee.Hasher where
 
-import Hashee.HasherState (HashingAlgorithm(..), ConcreteHasher)
-import Hashee.HasherState qualified as HasherState
+import Hashee.HashingAlgorithm (HashingAlgorithm(..), ConcreteHasher)
+import Hashee.HashingAlgorithm qualified as HashingAlgorithm
 import Data.Primitive (Prim)
 import Data.Primitive qualified as Primitive
 import Data.Primitive.ByteArray (ByteArray(ByteArray))
@@ -27,34 +27,34 @@ instance Monoid Hasher where
     mempty = Hasher id
 
 bytes :: ByteArray -> Hasher
-bytes !ba = Hasher (HasherState.updateBytes ba)
+bytes !ba = Hasher (HashingAlgorithm.updateBytes ba)
 
 word :: Word -> Hasher
-word !x = Hasher (HasherState.updateWord64 (fromIntegral x))
+word !x = Hasher (HashingAlgorithm.updateWord64 (fromIntegral x))
 
 word64 :: Word64 -> Hasher
-word64 !x = Hasher (HasherState.updateWord64 x)
+word64 !x = Hasher (HashingAlgorithm.updateWord64 x)
 
 word32 :: Word32 -> Hasher
-word32 !x = Hasher (HasherState.updateWord32 x)
+word32 !x = Hasher (HashingAlgorithm.updateWord32 x)
 
 word16 :: Word16 -> Hasher
-word16 !x = Hasher (HasherState.updateWord16 x)
+word16 !x = Hasher (HashingAlgorithm.updateWord16 x)
 
 word8 :: Word8 -> Hasher
-word8 !x = Hasher (HasherState.updateWord8 x)
+word8 !x = Hasher (HashingAlgorithm.updateWord8 x)
 
 int :: Int -> Hasher
-int !x = Hasher (HasherState.updateInt64 (fromIntegral x))
+int !x = Hasher (HashingAlgorithm.updateInt64 (fromIntegral x))
 
 int64 :: Int64 -> Hasher
-int64 !x = Hasher (HasherState.updateInt64 x)
+int64 !x = Hasher (HashingAlgorithm.updateInt64 x)
 
 int32 :: Int32 -> Hasher
-int32 !x = Hasher (HasherState.updateInt32 x)
+int32 !x = Hasher (HashingAlgorithm.updateInt32 x)
 
 int16 :: Int16 -> Hasher
-int16 !x = Hasher (HasherState.updateInt16 x)
+int16 !x = Hasher (HashingAlgorithm.updateInt16 x)
 
 int8 :: Int8 -> Hasher
-int8 !x = Hasher (HasherState.updateInt8 x)
+int8 !x = Hasher (HashingAlgorithm.updateInt8 x)

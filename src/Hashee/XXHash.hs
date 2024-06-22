@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 module Hashee.XXHash where
 
-import Hashee.HasherState
+import Hashee.HashingAlgorithm
 import Data.Primitive.ByteArray qualified as ByteArray
 import Data.Digest.XXHash.FFI.C (XXH3State)
 import Data.Digest.XXHash.FFI.C qualified as XXHash
