@@ -66,6 +66,7 @@ library
       Hashee
       , Hashee.Hasher
       , Hashee.HasherState
+      , Hashee.XXHash
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -78,6 +79,9 @@ library
       base ^>=4.19.0.0
       , primitive
       , bytestring
+      , xxhash-ffi ^>= 0.3
+      , hashable
+      , unordered-containers
 
     -- Directories containing source files.
     hs-source-dirs:   src

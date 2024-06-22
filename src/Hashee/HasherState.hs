@@ -10,54 +10,89 @@ import Data.Word
 import Data.Int
 import Control.Monad.ST (runST)
 
--- | Knows how to construct a new Hasher
---
--- `Hasher`s are stateful, `HasherBuilder`s are not,
--- and are the way you can 'reset' the state of a `Hasher`.
-class HasherState hr => HasherBuilder hb hr | hb -> hr where
-    build :: hb -> hr
+type ConcreteHasher h = (HasherState h -> HasherState h)
 
-class HasherState hr where
-  -- | The final output of running the hashing algorithm to completion.
-  -- Usually a `Word64`, 
-  -- sometimes a `Word32`
-  -- or very rarely a `Word128` (i.e. `(Word64, Word64)`)
-  --
-  -- Note that it's okay to keep calling `update*` on the hasher 
-  -- even after calling `digest` on it.
-  type Digest hr
+class HashingAlgorithm h where
+  -- | Intermediate state used by the algorithm
+  data HasherState h
+  -- | Final value produced by running the algorithm to completion
+  type Digest h
 
-  digest :: hr -> Digest hr
+  -- | Set up the state, run 
+  runAlg :: h -> ConcreteHasher h -> Digest h
 
-  updateBytes :: ByteArray -> hr -> hr
+  updateBytes :: ByteArray -> ConcreteHasher h
 
-  updateWord64 :: Word64 -> hr -> hr
+  updateWord64 :: Word64 -> ConcreteHasher h
   updateWord64 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
 
-  updateWord32 :: Word32 -> hr -> hr
+  updateWord32 :: Word32 -> ConcreteHasher h
   updateWord32 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
 
-  updateWord16 :: Word16 -> hr -> hr
+  updateWord16 :: Word16 -> ConcreteHasher h
   updateWord16 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
 
-  updateWord8 :: Word8 -> hr -> hr
+  updateWord8 :: Word8 -> ConcreteHasher h
   updateWord8 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
 
-  updateInt64 :: Int64 -> hr -> hr
+  updateInt64 :: Int64 -> ConcreteHasher h
   updateInt64 !x = updateWord64 (fromIntegral x)
 
-  updateInt32 :: Int32 -> hr -> hr
+  updateInt32 :: Int32 -> ConcreteHasher h
   updateInt32 !x = updateWord32 (fromIntegral x)
 
-  updateInt16 :: Int16 -> hr -> hr
+  updateInt16 :: Int16 -> ConcreteHasher h
   updateInt16 !x = updateWord16 (fromIntegral x)
 
-  updateInt8 :: Int8 -> hr -> hr
+  updateInt8 :: Int8 -> ConcreteHasher h
   updateInt8 !x = updateWord8 (fromIntegral x)
 
-  -- TODO maybe special updateLen?
+-- -- | Knows how to construct a new Hasher
+-- --
+-- -- `Hasher`s are stateful, `HasherBuilder`s are not,
+-- -- and are the way you can 'reset' the state of a `Hasher`.
+-- class HasherState hr => HasherBuilder hb hr | hb -> hr where
+--     build :: hb -> hr
 
+-- class HasherState hr where
+--   -- | The final output of running the hashing algorithm to completion.
+--   -- Usually a `Word64`, 
+--   -- sometimes a `Word32`
+--   -- or very rarely a `Word128` (i.e. `(Word64, Word64)`)
+--   --
+--   -- Note that it's okay to keep calling `update*` on the hasher 
+--   -- even after calling `digest` on it.
+--   type Digest hr
 
+--   digest :: hr -> Digest hr
+
+--   updateBytes :: ByteArray -> hr -> hr
+
+--   updateWord64 :: Word64 -> hr -> hr
+--   updateWord64 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
+
+--   updateWord32 :: Word32 -> hr -> hr
+--   updateWord32 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
+
+--   updateWord16 :: Word16 -> hr -> hr
+--   updateWord16 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
+
+--   updateWord8 :: Word8 -> hr -> hr
+--   updateWord8 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
+
+--   updateInt64 :: Int64 -> hr -> hr
+--   updateInt64 !x = updateWord64 (fromIntegral x)
+
+--   updateInt32 :: Int32 -> hr -> hr
+--   updateInt32 !x = updateWord32 (fromIntegral x)
+
+--   updateInt16 :: Int16 -> hr -> hr
+--   updateInt16 !x = updateWord16 (fromIntegral x)
+
+--   updateInt8 :: Int8 -> hr -> hr
+--   updateInt8 !x = updateWord8 (fromIntegral x)
+
+--   -- TODO maybe special updateLen?
 
 -- | Create a 'ByteArray' from a list of a known length. If the length
 -- of the list does not match the given length, this throws an exception.
@@ -70,4 +105,3 @@ unsafeByteArrayFromListN n ys = runST $ do
             go (ix + 1) xs
     go 0 ys
     Primitive.unsafeFreezeByteArray marr
-

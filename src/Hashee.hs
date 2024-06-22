@@ -1,6 +1,8 @@
-module Hashee (Hashee(hash)) where
+module Hashee (Hashee(buildHasher), hash) where
 
 import Hashee.Hasher (Hasher(Hasher))
+import Hashee.Hasher qualified as Hasher
+import Hashee.HasherState (HashingAlgorithm(Digest))
 import Hashee.Hasher qualified as Hasher
 import Data.Primitive.ByteArray (ByteArray)
 import Data.Primitive.ByteArray qualified as ByteArray
@@ -10,47 +12,72 @@ import Data.ByteString.Short (ShortByteString)
 import Data.ByteString.Short qualified as ShortByteString
 import Data.Void
 import Data.Tuple (Solo(..))
+import Data.Hashable (Hashable)
+import Data.Hashable qualified as Hashable
+
+hash :: (Hashee a, HashingAlgorithm h) => h -> a -> Digest h
+hash alg val = Hasher.runHasher alg (buildHasher val)
+
+data Hashed alg a = Hashed a {-# UNPACK #-} !Word64
+
+-- | Uses precomputed hash to detect inequality faster
+instance Eq a => Eq (Hashed alg a) where
+  Hashed a ha == Hashed b hb = ha == hb && a == b
+
+instance Ord a => Ord (Hashed alg a) where
+  Hashed a _ `compare` Hashed b _ = a `compare` b
+
+instance Show a => Show (Hashed alg a) where
+  showsPrec d (Hashed a _) = showParen (d > 10) $
+    showString "hashed" . showChar ' ' . showsPrec 11 a
+
+instance Eq a => Hashable (Hashed alg a) where
+  hashWithSalt = Hashable.defaultHashWithSalt
+  hash (Hashed _ ha) = fromIntegral ha
+
+hashed :: (Hashee a, HashingAlgorithm h, Digest h ~ Word64) => h -> a -> Hashed h a
+hashed alg val = let h = hash alg val in Hashed val h
 
 class Hashee a where
-  hash :: a -> Hasher
+  buildHasher :: a -> Hasher
 
 instance Hashee Word64 where
-  hash !x = Hasher.word64 x
+  buildHasher !x = Hasher.word64 x
 
 instance Hashee Word32 where
-  hash !x = Hasher.word32 x
+  buildHasher !x = Hasher.word32 x
 
 instance Hashee Int64 where
-  hash !x = Hasher.int64 x
+  buildHasher !x = Hasher.int64 x
 
 instance Hashee Int32 where
-  hash !x = Hasher.int32 x
+  buildHasher !x = Hasher.int32 x
 
 instance Hashee ByteArray where
-  hash !ba = Hasher.int (ByteArray.sizeofByteArray ba) <> Hasher.bytes ba
+  buildHasher !ba = Hasher.int (ByteArray.sizeofByteArray ba) <> Hasher.bytes ba
 
 instance Hashee ShortByteString where
-  hash !bs = Hasher.int (ShortByteString.length bs) <> Hasher.bytes (ShortByteString.unShortByteString bs)
+  buildHasher !bs = Hasher.int (ShortByteString.length bs) <> Hasher.bytes (ShortByteString.unShortByteString bs)
 
 instance Hashee Void where
-  hash v = case v of {}
+  buildHasher v = case v of {}
 
 instance Hashee () where
-  hash () = mempty
+  buildHasher () = mempty
 
 instance (Hashee a) => Hashee (Solo a) where
-  hash (MkSolo a) = hash a
+  buildHasher (MkSolo a) = buildHasher a
 
 instance (Hashee a, Hashee b) => Hashee (a, b) where
-  hash (a, b) = hash a <> hash b
+  buildHasher (a, b) = buildHasher a <> buildHasher b
 
 instance (Hashee a, Hashee b, Hashee c) => Hashee (a, b, c) where
-  hash (a, b, c) = hash a <> hash b <> hash c
+  buildHasher (a, b, c) = buildHasher a <> buildHasher b <> buildHasher c
 
 instance (Hashee a) => Hashee (Maybe a) where
-    hash Nothing = Hasher.int8 0
-    hash (Just b) = Hasher.int8 1 <> hash b
+    buildHasher Nothing = Hasher.int8 0
+    buildHasher (Just b) = Hasher.int8 1 <> buildHasher b
 
 instance (Hashee a, Hashee b) => Hashee (Either a b) where
-    hash (Left a) = Hasher.int8 0 <> hash a
-    hash (Right b) = Hasher.int8 1 <> hash b
+    buildHasher (Left a) = Hasher.int8 0 <> buildHasher a
+    buildHasher (Right b) = Hasher.int8 1 <> buildHasher b

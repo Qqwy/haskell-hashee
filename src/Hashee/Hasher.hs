@@ -3,7 +3,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 module Hashee.Hasher where
 
-import Hashee.HasherState (HasherState)
+import Hashee.HasherState (HashingAlgorithm(..), ConcreteHasher)
 import Hashee.HasherState qualified as HasherState
 import Data.Primitive (Prim)
 import Data.Primitive qualified as Primitive
@@ -13,7 +13,12 @@ import Data.Word
 import Data.Int
 import Control.Monad.ST (runST)
 
-newtype Hasher = Hasher (forall hr. HasherState hr => hr -> hr)
+newtype Hasher = Hasher (forall hr. HashingAlgorithm hr => ConcreteHasher hr)
+
+runHasher :: HashingAlgorithm h => h -> Hasher -> Digest h
+{-# INLINE runHasher #-}
+runHasher alg (Hasher hr) = runAlg alg hr
+
 
 instance Semigroup Hasher where
     (Hasher f) <> (Hasher g) = Hasher (g . f)
