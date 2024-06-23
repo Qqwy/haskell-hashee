@@ -70,6 +70,7 @@ library
       , Hashee.XXHash
       , Hashee.SipHash
       , Hashee.Internal.Iterate
+      , Example
 
     -- Modules included in this library but not exported.
     -- other-modules:
