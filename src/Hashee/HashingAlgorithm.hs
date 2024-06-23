@@ -42,6 +42,14 @@ class HashingAlgorithm h where
 
   updateBytes :: ByteArray -> ConcreteHasher h
 
+  -- | NOTE: Only correct for HashingAlgorithms
+  -- which work byte-wise.
+  -- 
+  -- If you algorithm works per-word,
+  -- you need to make sure that the chunks are all word-sized
+  updateBytesChunks :: [ByteArray] -> ConcreteHasher h
+  updateBytesChunks bas = \state -> foldr updateBytes state bas
+
   -- | Updates a string or bytestring, including a length prefix
   -- Can be overridden by hashing algs if they already manage this differently
   updateByteString :: ByteArray -> ConcreteHasher h
