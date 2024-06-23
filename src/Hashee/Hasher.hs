@@ -17,7 +17,7 @@ newtype Hasher = Hasher (forall hr. HashingAlgorithm hr => ConcreteHasher hr)
 
 runHasher :: HashingAlgorithm h => h -> Hasher -> Digest h
 {-# INLINE runHasher #-}
-runHasher alg (Hasher hr) = runAlg alg hr
+runHasher !alg (Hasher !hr) = runAlg alg hr
 
 
 instance Semigroup Hasher where

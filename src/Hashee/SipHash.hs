@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds #-}
 module Hashee.SipHash where
 
 -- Code is adapted from VincentHZ's hs-memory library
@@ -17,7 +18,7 @@ import GHC.TypeLits
 
 import Hashee.HashingAlgorithm (HashingAlgorithm(..))
 
-type SipHash14 = SipHash 1 3
+type SipHash13 = SipHash 1 3
 type SipHash24 = SipHash 2 4
 type SipHash48 = SipHash 4 8
 
@@ -32,6 +33,7 @@ instance (KnownNat c, KnownNat d) => HashingAlgorithm (SipHash c d) where
   data HasherState (SipHash c d) = SipHashState {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
   type Digest (SipHash c d) = Word64
 
+  {-# INLINE runAlg #-}
   runAlg key hasher =
     let 
        state = initSip key
@@ -221,18 +223,22 @@ doRound (SipHashState v0 v1 v2 v3) =
 runRoundsCompression :: forall c d. (KnownNat c, KnownNat d) => (HasherState (SipHash c d)) -> HasherState (SipHash c d)
 runRoundsCompression st
     | (natWord @d) == 2    = doRound $! doRound st
-    | otherwise = loopRounds (natWord @c) st
+    | otherwise = loopRounds @c @c @d st
 
 {-# INLINE runRoundsDigest #-}
 runRoundsDigest :: forall c d. (KnownNat c, KnownNat d) => HasherState (SipHash c d) -> HasherState (SipHash c d)
 runRoundsDigest st
     | (natWord @d) == 4    = doRound $! doRound $! doRound $! doRound st
-    | otherwise = loopRounds (natWord @c) st
+    | otherwise = loopRounds @c @c @d st
 
 {-# INLINE loopRounds #-}
-loopRounds :: Word64 -> HasherState (SipHash c d) -> HasherState (SipHash c d)
-loopRounds 1 !v = doRound v
-loopRounds n !v = loopRounds (n-1) (doRound v)
+loopRounds :: forall i c d. (KnownNat i, KnownNat (i - 1), KnownNat c, KnownNat d) => HasherState (SipHash c d) -> HasherState (SipHash c d)
+loopRounds !v = case sameNat (Proxy @i) (Proxy @1) of
+    Just _proof -> doRound v
+    Nothing -> doRound $ loopRounds @(i - 1) v
+-- loopRounds | sameNat @c 1 == Just _proof = doRound v
+-- loopRounds 1 !v = doRound v
+-- loopRounds n !v = loopRounds (n-1) (doRound v)
 
 {-# INLINE initSip #-}
 initSip :: forall c d. SipHash c d -> HasherState (SipHash c d)

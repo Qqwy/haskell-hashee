@@ -1,4 +1,6 @@
-module Hashee (Hashee(buildHasher), hash) where
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -ddump-asm -O2 #-}
+module Hashee (Hashee(buildHasher), hash, example) where
 
 import Hashee.Hasher (Hasher)
 import Hashee.Hasher qualified as Hasher
@@ -11,10 +13,17 @@ import Data.ByteString.Short (ShortByteString)
 import Data.ByteString.Short qualified as ShortByteString
 import Data.Void
 import Data.Tuple (Solo(..))
+import Hashee.SipHash
+
+example = do
+  input <- pure (42 :: Int) -- ("hello world" :: ShortByteString)
+  let alg = SipHash 0 0 :: SipHash48
+  let result = hash alg input
+  print result
 
 hash :: (Hashee a, HashingAlgorithm h) => h -> a -> Digest h
 {-# INLINE hash #-}
-hash alg val = Hasher.runHasher alg (buildHasher val)
+hash !alg !val = Hasher.runHasher alg (buildHasher val)
 
 class Hashee a where
   buildHasher :: a -> Hasher
