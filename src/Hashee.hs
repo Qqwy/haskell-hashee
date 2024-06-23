@@ -16,7 +16,7 @@ import Data.Tuple (Solo(..))
 import Hashee.SipHash
 
 example = do
-  input <- pure (42 :: Int) -- ("hello world" :: ShortByteString)
+  input <- pure ("hello world" :: ShortByteString)
   let alg = SipHash 0 0 :: SipHash48
   let result = hash alg input
   print result
