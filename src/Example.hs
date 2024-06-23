@@ -10,7 +10,7 @@ import Data.ByteString.Short qualified as ShortByteString
 import Data.Word
 
 example = do
-  input <- (readLn :: IO Word64) -- pure ("hello world" :: ShortByteString)
+  input <- (readLn :: IO (Word64, Word64)) -- pure ("hello world" :: ShortByteString)
   let alg = SipHash 0 0 :: SipHash 2 4
   let result = Hashee.hash alg input
   print result

@@ -70,6 +70,7 @@ library
       , Hashee.XXHash
       , Hashee.SipHash
       , Hashee.Internal.Iterate
+      , Hashee.ByteIndexable
       , Example
 
     -- Modules included in this library but not exported.
@@ -83,6 +84,7 @@ library
       base ^>=4.19.0.0
       , primitive
       , bytestring
+      , text
       , xxhash-ffi ^>= 0.3
       , hashable
       , unordered-containers

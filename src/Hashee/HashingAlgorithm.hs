@@ -10,6 +10,25 @@ import Data.Word
 import Data.Int
 import Control.Monad.ST (runST)
 
+-- -- | CStrLen but for Word8-pointers
+-- type BytesAndLen = (Ptr Word8, CSize)
+
+-- makeByteChunksWordAligned :: [BytesAndLen] -> [BytesAndLen]
+-- makeByteChunksWordAligned [] = []
+-- makeByteChunksWordAligned [x] = [x]
+-- makeByteChunksWordAligned (ptr1, len1) : (ptr2, len2) : rest =
+--   case len1 `mod` 8 of
+--     0 -> (ptr1, len1) : makeByteChunksWordAligned ((ptr2, len2) : rest)
+--     leftover -> 
+--       let first = (ptr1, len1 - leftover)
+--           extra = undefined
+--           second = (ptr2 `plusPtr` leftover, len2 - leftover)
+--       in
+--         allocaBytes \
+--       first : extra : makeByteChunksWordAligned second : rest
+
+
+
 type ConcreteHasher h = (HasherState h -> HasherState h)
 
 class HashingAlgorithm h where
