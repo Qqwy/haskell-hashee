@@ -23,6 +23,14 @@ instance Hashee Word64 where
   {-# INLINE buildHasher #-}
   buildHasher !x = Hasher.word64 x
 
+instance Hashee Word where
+  {-# INLINE buildHasher #-}
+  buildHasher !x = Hasher.word x
+
+instance Hashee Int where
+  {-# INLINE buildHasher #-}
+  buildHasher !x = Hasher.int x
+
 instance Hashee Word32 where
   {-# INLINE buildHasher #-}
   buildHasher !x = Hasher.word32 x
@@ -37,11 +45,11 @@ instance Hashee Int32 where
 
 instance Hashee ByteArray where
   {-# INLINE buildHasher #-}
-  buildHasher !ba = Hasher.int (ByteArray.sizeofByteArray ba) <> Hasher.bytes ba
+  buildHasher !ba = Hasher.bytes ba
 
 instance Hashee ShortByteString where
   {-# INLINE buildHasher #-}
-  buildHasher !bs = Hasher.int (ShortByteString.length bs) <> Hasher.bytes (ShortByteString.unShortByteString bs)
+  buildHasher !bs = Hasher.bytes (ShortByteString.unShortByteString bs)
 
 instance Hashee Void where
   {-# INLINE buildHasher #-}

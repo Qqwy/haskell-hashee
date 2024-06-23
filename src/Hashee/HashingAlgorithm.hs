@@ -23,6 +23,11 @@ class HashingAlgorithm h where
 
   updateBytes :: ByteArray -> ConcreteHasher h
 
+  -- | Updates a string or bytestring, including a length prefix
+  -- Can be overridden by hashing algs if they already manage this differently
+  updateByteString :: ByteArray -> ConcreteHasher h
+  updateByteString !ba = (updateBytes ba . updateInt64 (fromIntegral $ ByteArray.sizeofByteArray ba))
+
   updateWord64 :: Word64 -> ConcreteHasher h
   {-# INLINE updateWord64 #-}
   updateWord64 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]

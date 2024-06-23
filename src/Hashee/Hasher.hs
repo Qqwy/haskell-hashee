@@ -26,8 +26,11 @@ instance Semigroup Hasher where
 instance Monoid Hasher where
     mempty = Hasher id
 
+rawBytes :: ByteArray -> Hasher
+rawBytes !ba = Hasher (HashingAlgorithm.updateBytes ba)
+
 bytes :: ByteArray -> Hasher
-bytes !ba = Hasher (HashingAlgorithm.updateBytes ba)
+bytes !ba = Hasher (HashingAlgorithm.updateByteString ba)
 
 word :: Word -> Hasher
 word !x = Hasher (HashingAlgorithm.updateWord64 (fromIntegral x))

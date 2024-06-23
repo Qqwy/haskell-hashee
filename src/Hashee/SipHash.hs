@@ -12,11 +12,20 @@ import           Data.Typeable (Typeable, Proxy(Proxy))
 import           Control.Monad
 import           Foreign.Ptr
 import           Foreign.Storable
+import Data.Primitive.ByteArray qualified as ByteArray
 import GHC.TypeLits
 
 import Hashee.HashingAlgorithm (HashingAlgorithm(..))
 
--- | SipHash Key
+type SipHash14 = SipHash 1 3
+type SipHash24 = SipHash 2 4
+type SipHash48 = SipHash 4 8
+
+-- | The SipHash algorithm
+-- 'c' is the amount of compression rounds
+-- 'd' is the amount of finalization rounds.
+--
+-- SipHash 2 4 is the most commonly used version.
 data SipHash (c :: Nat) (d :: Nat) = SipHash {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
 
 instance (KnownNat c, KnownNat d) => HashingAlgorithm (SipHash c d) where
@@ -34,7 +43,69 @@ instance (KnownNat c, KnownNat d) => HashingAlgorithm (SipHash c d) where
   updateWord16 w = updateWord64 (fromIntegral w)
   updateWord8 w  = updateWord64 (fromIntegral w)
 
-  updateBytes = undefined
+  -- SipHash already ensures bytestring length is taken into account
+  updateByteString = updateBytes
+
+  updateBytes ba = \state ->
+    go 0 (len `div` 8) state
+    where
+      len = ByteArray.sizeofByteArray ba
+      indexByte index = to64 (ByteArray.indexByteArray ba index)
+      go index len state 
+        | index == len = handleLeftover state
+        | otherwise    =
+          let state' = process @c @d state (ByteArray.indexByteArray ba index)
+          in
+          go (succ index) len state'
+      handleLeftover state =
+        let lenHighByte = (fromIntegral len `mod` 256) `unsafeShiftL` 56
+        in
+          process state $ case len `mod` 8 of
+            0 -> 
+                lenHighByte
+            1 -> 
+                lenHighByte 
+                .|. indexByte (len - 1)
+            2 -> 
+              lenHighByte 
+              .|. indexByte (len - 2)
+              .|. indexByte (len - 1) `unsafeShiftL` 8
+            3 -> 
+              lenHighByte 
+              .|. indexByte (len - 3)
+              .|. indexByte (len - 2) `unsafeShiftL` 8
+              .|. indexByte (len - 1) `unsafeShiftL` 16
+            4 -> 
+              lenHighByte 
+              .|. indexByte (len - 4)
+              .|. indexByte (len - 3) `unsafeShiftL` 8
+              .|. indexByte (len - 2) `unsafeShiftL` 16
+              .|. indexByte (len - 1) `unsafeShiftL` 24
+            5 -> 
+              lenHighByte 
+              .|. indexByte (len - 5)
+              .|. indexByte (len - 4) `unsafeShiftL` 8
+              .|. indexByte (len - 3) `unsafeShiftL` 16
+              .|. indexByte (len - 2) `unsafeShiftL` 24
+              .|. indexByte (len - 1) `unsafeShiftL` 32
+            6 -> 
+              lenHighByte 
+              .|. indexByte (len - 6)
+              .|. indexByte (len - 5) `unsafeShiftL` 8
+              .|. indexByte (len - 4) `unsafeShiftL` 16
+              .|. indexByte (len - 3) `unsafeShiftL` 24
+              .|. indexByte (len - 2) `unsafeShiftL` 32
+              .|. indexByte (len - 1) `unsafeShiftL` 40
+            7 -> 
+              lenHighByte 
+              .|. indexByte (len - 7)
+              .|. indexByte (len - 6) `unsafeShiftL` 8
+              .|. indexByte (len - 5) `unsafeShiftL` 16
+              .|. indexByte (len - 4) `unsafeShiftL` 24
+              .|. indexByte (len - 3) `unsafeShiftL` 32
+              .|. indexByte (len - 2) `unsafeShiftL` 40
+              .|. indexByte (len - 1) `unsafeShiftL` 48
+            _ -> error "Unreachable"
 
 -- -- | produce a siphash with a key and a memory pointer + length.
 -- hash :: SipHash -> Ptr Word8 -> Int -> IO SipHash
