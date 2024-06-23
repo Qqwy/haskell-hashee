@@ -15,6 +15,7 @@ instance HashingAlgorithm XXH3 where
   newtype HasherState XXH3 = HasherState_XXH3 LiftedXXH3State
   type Digest XXH3 = Word64
 
+  {-# INLINE runAlg #-}
   runAlg (XXH3 seed) hasher = unsafePerformIO $ XXHash.allocaXXH3State $ \state -> do
     let seedCULLong = fromIntegral seed
     XXHash.c_xxh3_64bits_reset_withSeed state seedCULLong
@@ -22,6 +23,7 @@ instance HashingAlgorithm XXH3 where
     digest <- XXHash.c_xxh3_64bits_digest finalState
     pure (fromIntegral $ digest)
 
+  {-# INLINE updateBytes #-}
   updateBytes !ba (HasherState_XXH3 (LS state)) = unsafePerformIO $ ByteArray.withByteArrayContents ba $ \ptr -> do
     let len = fromIntegral $ ByteArray.sizeofByteArray ba
     XXHash.c_xxh3_64bits_update state ptr len

@@ -66,8 +66,9 @@ library
       Hashee
       , Hashee.Hasher
       , Hashee.HashingAlgorithm
-      , Hashee.XXHash
       , Hashee.Hashed
+      , Hashee.XXHash
+      , Hashee.SipHash
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -83,6 +84,7 @@ library
       , xxhash-ffi ^>= 0.3
       , hashable
       , unordered-containers
+      , memory
 
     -- Directories containing source files.
     hs-source-dirs:   src

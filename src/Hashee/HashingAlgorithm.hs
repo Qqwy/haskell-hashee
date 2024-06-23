@@ -24,32 +24,42 @@ class HashingAlgorithm h where
   updateBytes :: ByteArray -> ConcreteHasher h
 
   updateWord64 :: Word64 -> ConcreteHasher h
+  {-# INLINE updateWord64 #-}
   updateWord64 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
 
   updateWord32 :: Word32 -> ConcreteHasher h
+  {-# INLINE updateWord32 #-}
   updateWord32 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
 
   updateWord16 :: Word16 -> ConcreteHasher h
+  {-# INLINE updateWord16 #-}
   updateWord16 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
 
   updateWord8 :: Word8 -> ConcreteHasher h
+  {-# INLINE updateWord8 #-}
   updateWord8 !x = updateBytes $ unsafeByteArrayFromListN 1 [x]
 
   updateInt64 :: Int64 -> ConcreteHasher h
+  {-# INLINE updateInt64 #-}
   updateInt64 !x = updateWord64 (fromIntegral x)
 
   updateInt32 :: Int32 -> ConcreteHasher h
+  {-# INLINE updateInt32 #-}
   updateInt32 !x = updateWord32 (fromIntegral x)
 
   updateInt16 :: Int16 -> ConcreteHasher h
+  {-# INLINE updateInt16 #-}
   updateInt16 !x = updateWord16 (fromIntegral x)
 
   updateInt8 :: Int8 -> ConcreteHasher h
+  {-# INLINE updateInt8 #-}
   updateInt8 !x = updateWord8 (fromIntegral x)
 
--- | Create a 'ByteArray' from a list of a known length. If the length
--- of the list does not match the given length, this throws an exception.
+-- | Create a 'ByteArray' from a list of a known length. 
+-- If the length of the list does not match the given length,
+-- we're off to undefined behaviour land
 unsafeByteArrayFromListN :: forall a. Prim a => Int -> [a] -> ByteArray
+{-# INLINE unsafeByteArrayFromListN #-}
 unsafeByteArrayFromListN n ys = runST $ do
     marr <- Primitive.newByteArray (n * Primitive.sizeOfType @a)
     let go !_ [] = return ()
