@@ -10,18 +10,20 @@ import Data.ByteString qualified as ByteString
 import Data.ByteString.Lazy (LazyByteString)
 import Data.ByteString.Lazy qualified as LazyByteString
 import Data.ByteString.Unsafe qualified as ByteString.Unsafe
-
--- import Data.Text qualified as Text
+import Data.ByteString.Short (ShortByteString)
+import Data.ByteString.Short qualified as ShortByteString
 import Data.Text.Internal (Text(..))
+import Data.Text.Lazy qualified as LazyText
+import Data.Text.Short (ShortText)
+import Data.Text.Short qualified as ShortText
+import Foreign.C.String (CStringLen)
+import Foreign.Storable (peekByteOff)
 
 import Data.Word (Word8)
 
-import Data.Text.Lazy qualified as LazyText
-
 import GHC.IO (IO(IO))
 import GHC.Exts (realWorld#)
-import Foreign.C.String (CStringLen)
-import Foreign.Storable (peekByteOff)
+
 
 class ByteIndexable ba where
   size :: ba -> Int
@@ -61,6 +63,18 @@ instance ByteIndexable LazyText.Text where
       go (t : ts) ix'
         | ix' < size t = unsafeIndex t ix'
         | otherwise   = go ts (ix' - size t)
+
+instance ByteIndexable ShortByteString where
+  {-# INLINE size #-}
+  size = size . ShortByteString.unShortByteString
+  {-# INLINE unsafeIndex #-}
+  unsafeIndex =  unsafeIndex . ShortByteString.unShortByteString
+
+instance ByteIndexable ShortText where
+  {-# INLINE size #-}
+  size = size . ShortText.toShortByteString
+  {-# INLINE unsafeIndex #-}
+  unsafeIndex =  unsafeIndex . ShortText.toShortByteString
 
 instance ByteIndexable CStringLen where
   size (_ptr, len) = len
