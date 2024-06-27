@@ -1,10 +1,13 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE UndecidableInstances #-}
+-- {-# LANGUAGE DataKinds #-}
+-- {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE LambdaCase #-}
 {-# OPTIONS_GHC -O2 -ddump-stg-from-core #-}
 module Hashee.Internal.Iterate where
-    
--- import GHC.TypeLits
+
+import GHC.TypeLits
+import Data.Typeable (Proxy(Proxy))
 
 -- -- Implementation with thanks to Mango IV!
 -- class Iterate (n :: Nat) where
@@ -18,8 +21,8 @@ module Hashee.Internal.Iterate where
 --   {-# INLINE iter #-}
 --   iter f = f . iter @(n - 1) f
 
-iter :: forall n -> (KnownNat n) => (a -> a) -> a -> a
-iter n f z = iter' f z (natVal (Proxy @n))
+iter :: forall n a. (KnownNat n) => (a -> a) -> a -> a
+iter f z = iter' f z (natVal (Proxy @n))
   where
     iter' g !x = \case
       0 -> x

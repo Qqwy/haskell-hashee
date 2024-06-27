@@ -13,7 +13,6 @@ import           Data.Typeable (Typeable, Proxy(Proxy))
 import           Control.Monad
 import           Foreign.Ptr
 import           Foreign.Storable
-import Hashee.Internal.Iterate (Iterate)
 import Hashee.Internal.Iterate qualified as Iterate
 import Data.Primitive.ByteArray qualified as ByteArray
 import GHC.TypeLits
@@ -31,7 +30,7 @@ type SipHash48 = SipHash 4 8
 -- SipHash 2 4 is the most commonly used version.
 data SipHash (c :: Nat) (d :: Nat) = SipHash {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
 
-instance (Iterate c, Iterate d) => HashingAlgorithm (SipHash c d) where
+instance (KnownNat c, KnownNat d) => HashingAlgorithm (SipHash c d) where
   data HasherState (SipHash c d) = SipHashState {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
   type Digest (SipHash c d) = Word64
 
@@ -122,14 +121,14 @@ to64 :: Word8 -> Word64
 to64 = fromIntegral
 
 {-# INLINE process #-}
-process :: forall c d. (Iterate c, Iterate d) => (HasherState (SipHash c d)) -> Word64 -> (HasherState (SipHash c d))
+process :: forall c d. (KnownNat c) => (HasherState (SipHash c d)) -> Word64 -> (HasherState (SipHash c d))
 process istate m = newState
     where newState = postInject $! runRoundsCompression @c @d $! preInject istate
           preInject  (SipHashState v0 v1 v2 v3) = SipHashState v0 v1 v2 (v3 `xor` m)
           postInject (SipHashState v0 v1 v2 v3) = SipHashState (v0 `xor` m) v1 v2 v3
 
 {-# INLINE finish #-}
-finish :: forall c d. (Iterate c, Iterate d) => (HasherState (SipHash c d)) -> Digest (SipHash c d)
+finish :: forall c d. (KnownNat d) => (HasherState (SipHash c d)) -> Digest (SipHash c d)
 finish istate = getDigest $! runRoundsDigest @c @d $! preInject istate
     where getDigest (SipHashState v0 v1 v2 v3) = (v0 `xor` v1 `xor` v2 `xor` v3)
           preInject (SipHashState v0 v1 v2 v3) = SipHashState v0 v1 (v2 `xor` 0xff) v3
@@ -154,14 +153,14 @@ doRound (SipHashState v0 v1 v2 v3) =
         in SipHashState v0''' v1'''' v2''' v3''''
 
 {-# INLINE runRoundsCompression #-}
-runRoundsCompression :: forall c d. (Iterate c) => (HasherState (SipHash c d)) -> HasherState (SipHash c d)
+runRoundsCompression :: forall c d. (KnownNat c) => (HasherState (SipHash c d)) -> HasherState (SipHash c d)
 runRoundsCompression st = loopRounds @c st
 
 {-# INLINE runRoundsDigest #-}
-runRoundsDigest :: forall c d. (Iterate d) => HasherState (SipHash c d) -> HasherState (SipHash c d)
+runRoundsDigest :: forall c d. (KnownNat d) => HasherState (SipHash c d) -> HasherState (SipHash c d)
 runRoundsDigest st = loopRounds @d st
 
-loopRounds :: forall i c d. (Iterate i) => HasherState (SipHash c d) -> HasherState (SipHash c d)
+loopRounds :: forall i c d. (KnownNat i) => HasherState (SipHash c d) -> HasherState (SipHash c d)
 loopRounds !v = Iterate.iter @i doRound v
 
 {-# INLINE initialize #-}
